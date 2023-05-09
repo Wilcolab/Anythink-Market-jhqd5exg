@@ -5,6 +5,7 @@ var Comment = mongoose.model("Comment");
 var User = mongoose.model("User");
 var auth = require("../auth");
 const { sendEvent } = require("../../lib/event");
+const { response } = require("express");
 
 // Preload item objects on routes with ':item'
 router.param("item", function(req, res, next, slug) {
@@ -182,8 +183,35 @@ router.put("/:item", auth.required, function(req, res, next) {
         req.item.description = req.body.item.description;
       }
 
+
+      console.log("DEBUG: Update", req.body.item.title)
+
       if (typeof req.body.item.image !== "undefined") {
         req.item.image = req.body.item.image;
+      } else {
+
+        console.log("DEBUG: Image undefined", req.body.item.title)
+        if(req.body.item.description || req.body.item.title){
+          const prompt = `TITLE: ${req.body.item.title} - DESCRIPTION: A high quality photograpy. ${req.body.item.description}`;
+          console.log(`DEBUG: ${prompt}`)
+
+          const { Configuration, OpenAIApi } = require("openai");
+          const configuration = new Configuration({
+            apiKey: process.env.OPENAI_API_KEY,
+          });
+          const openai = new OpenAIApi(configuration);
+          const load = openai.createImage({
+            prompt: prompt,
+            n: 1,
+            size: "256x256",
+          });
+          load.then( (response) => {
+            image_url = response.data.data[0].url;
+            if(image_url){
+              req.item.image = image_url;
+            }
+          })
+        }
       }
 
       if (typeof req.body.item.tagList !== "undefined") {
