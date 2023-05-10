@@ -8,10 +8,11 @@
             "type": "node",
             "name": "Attach to Backend node",
             "request": "attach",
+            "trace": true,
             "address": "localhost",
             "port": 9229,
             "localRoot": "${workspaceFolder}/backend",
-            "remoteRoot": "/usr/src/",
+            "remoteRoot": "/usr/src/backend",
             "skipFiles": [
                 "<node_internals>/**"
             ],
