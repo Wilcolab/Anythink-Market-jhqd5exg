@@ -138,6 +138,20 @@ router.get("/feed", auth.required, function(req, res, next) {
   });
 });
 
+
+const { Configuration, OpenAIApi } = require("openai");
+
+function saveItem(res, item_request, user) {
+    let item = new Item(item_request);
+
+    item.seller = user;
+
+    return item.save().then(function() {
+      sendEvent('item_created', { item: item_request })
+      return res.json({ item: item.toJSONFor(user) });
+    });
+}
+
 router.post("/", auth.required, function(req, res, next) {
   User.findById(req.payload.id)
     .then(function(user) {
@@ -145,14 +159,53 @@ router.post("/", auth.required, function(req, res, next) {
         return res.sendStatus(401);
       }
 
-      var item = new Item(req.body.item);
+      const image_title = req.body.item.title;
+      const image_description_req = req.body.item.description;
+      const image_description = req.body.item.description? `DESCRIPTION: A high quality photograpy of ${image_description_req}`: image_description_req;
+      const image_url_req = req.body.item.image
+      if(image_title && image_description ){
 
-      item.seller = user;
+        if(!image_url_req){
+          // Only generate an image if properly defined
+          const prompt = `TITLE: ${image_title} ${image_description}`;
 
-      return item.save().then(function() {
-        sendEvent('item_created', { item: req.body.item })
-        return res.json({ item: item.toJSONFor(user) });
-      });
+          const configuration = new Configuration({
+            apiKey: process.env.OPEN_AI_API,
+          });
+          const openai = new OpenAIApi(configuration);
+          const load = openai.createImage({
+            prompt: prompt,
+            n: 1,
+            size: "256x256",
+          });
+          return load.then( (response) => 
+            {
+              
+              if(response.data && response.data.data && response.data.data.length> 0  &&
+                  response.data.data[0].url ){
+                image_url = response.data.data[0].url;
+                req.body.item.image = image_url;
+              } else {
+                console.error(`[ERROR] Could not get OpenAI data back due to unexpected format`);
+              }
+
+              req.body.item.description = image_description_req;
+              
+              return saveItem(res, req.body.item, user);
+            },
+            (e) => {
+              console.error("[ERROR] POST ITEM OpenAI problem", e)
+              return saveItem(res, req.body.item, user);
+            }
+          )
+        }
+        else {
+          return saveItem(res, req.body.item, user);
+        }
+      } else {
+        console.error("[DEBUG] ITEM POST : The title and description are not both defined");
+        return;
+      }
     })
     .catch(next);
 });
@@ -184,35 +237,9 @@ router.put("/:item", auth.required, function(req, res, next) {
       }
 
 
-      console.log("DEBUG: Update", req.body.item.title)
-
       if (typeof req.body.item.image !== "undefined") {
         req.item.image = req.body.item.image;
-      } else {
-
-        console.log("DEBUG: Image undefined", req.body.item.title)
-        if(req.body.item.description || req.body.item.title){
-          const prompt = `TITLE: ${req.body.item.title} - DESCRIPTION: A high quality photograpy. ${req.body.item.description}`;
-          console.log(`DEBUG: ${prompt}`)
-
-          const { Configuration, OpenAIApi } = require("openai");
-          const configuration = new Configuration({
-            apiKey: process.env.OPENAI_API_KEY,
-          });
-          const openai = new OpenAIApi(configuration);
-          const load = openai.createImage({
-            prompt: prompt,
-            n: 1,
-            size: "256x256",
-          });
-          load.then( (response) => {
-            image_url = response.data.data[0].url;
-            if(image_url){
-              req.item.image = image_url;
-            }
-          })
-        }
-      }
+      } 
 
       if (typeof req.body.item.tagList !== "undefined") {
         req.item.tagList = req.body.item.tagList;
