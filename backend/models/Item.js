@@ -19,6 +19,63 @@ var ItemSchema = new mongoose.Schema(
 
 ItemSchema.plugin(uniqueValidator, { message: "is already taken" });
 
+
+const { Configuration, OpenAIApi } = require("openai");
+
+function generateImage(item) {
+
+}
+
+// Execute before saving the item to the database
+ItemSchema.pre("save", function(next) {
+  if (!this.image) {
+    // Generate an image if not defined before saving
+    const item = this;
+    
+    const image_title = item.title;
+    const image_description_req = item.description;
+    const image_description = image_description_req? `DESCRIPTION: A high quality photograpy of ${image_description_req}`: image_description_req;
+    const prompt = `TITLE: ${image_title} ${image_description}`;
+  
+    console.log(`[INFO] Generating image for ${item.title}`);
+    const configuration = new Configuration({
+      apiKey: process.env.OPEN_AI_API,
+    });
+    
+    const openai = new OpenAIApi(configuration);
+    const load = openai.createImage({
+      prompt: prompt,
+      n: 1,
+      size: "256x256",
+    });
+
+    return load.then( (response) => 
+      {
+        
+        if(response.data && response.data.data && response.data.data.length> 0  &&
+            response.data.data[0].url ){
+          image_url = response.data.data[0].url;
+          console.log(`[INFO] Generated image for ${item.title} at ${image_url}`);
+          item.image = image_url;
+        } else {
+          console.error(`[ERROR] Could not get OpenAI data back due to unexpected format`);
+        }
+  
+        next();
+      },
+      (e) => {
+        console.error("[ERROR] POST ITEM OpenAI problem", e);
+
+        next();
+      }
+    );
+
+
+  }
+
+});
+
+
 ItemSchema.pre("validate", function(next) {
   if (!this.slug) {
     this.slugify();

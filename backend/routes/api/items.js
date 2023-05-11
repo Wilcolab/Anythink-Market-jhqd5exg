@@ -139,8 +139,6 @@ router.get("/feed", auth.required, function(req, res, next) {
 });
 
 
-const { Configuration, OpenAIApi } = require("openai");
-
 function saveItem(res, item_request, user) {
     let item = new Item(item_request);
 
@@ -159,53 +157,7 @@ router.post("/", auth.required, function(req, res, next) {
         return res.sendStatus(401);
       }
 
-      const image_title = req.body.item.title;
-      const image_description_req = req.body.item.description;
-      const image_description = req.body.item.description? `DESCRIPTION: A high quality photograpy of ${image_description_req}`: image_description_req;
-      const image_url_req = req.body.item.image
-      if(image_title && image_description ){
-
-        if(!image_url_req){
-          // Only generate an image if properly defined
-          const prompt = `TITLE: ${image_title} ${image_description}`;
-
-          const configuration = new Configuration({
-            apiKey: process.env.OPEN_AI_API,
-          });
-          const openai = new OpenAIApi(configuration);
-          const load = openai.createImage({
-            prompt: prompt,
-            n: 1,
-            size: "256x256",
-          });
-          return load.then( (response) => 
-            {
-              
-              if(response.data && response.data.data && response.data.data.length> 0  &&
-                  response.data.data[0].url ){
-                image_url = response.data.data[0].url;
-                req.body.item.image = image_url;
-              } else {
-                console.error(`[ERROR] Could not get OpenAI data back due to unexpected format`);
-              }
-
-              req.body.item.description = image_description_req;
-              
-              return saveItem(res, req.body.item, user);
-            },
-            (e) => {
-              console.error("[ERROR] POST ITEM OpenAI problem", e)
-              return saveItem(res, req.body.item, user);
-            }
-          )
-        }
-        else {
-          return saveItem(res, req.body.item, user);
-        }
-      } else {
-        console.error("[DEBUG] ITEM POST : The title and description are not both defined");
-        return;
-      }
+      return saveItem(res, req.body.item, user);
     })
     .catch(next);
 });
