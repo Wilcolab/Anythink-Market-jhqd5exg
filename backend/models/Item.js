@@ -28,7 +28,8 @@ function generateImage(item) {
 
 // Execute before saving the item to the database
 ItemSchema.pre("save", function(next) {
-  if ((!this.image) || (this.image.length === 0)) {
+  console.log(`[INFO] Preparing to save item ${this.title} with image ${JSON.stringify(this)}`)
+  if ((!this?.image) || (this.image === "")) {
     // Generate an image if not defined before saving
     const item = this;
     
