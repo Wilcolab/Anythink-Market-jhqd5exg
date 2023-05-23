@@ -41,7 +41,7 @@ ItemSchema.pre("save", function (next) {
 
     console.log(`[INFO] Generating image for ${item.title}`);
     const configuration = new Configuration({
-      apiKey: process.env.OPEN_AI_API,
+      apiKey: process.env.OPENAI_API_KEY,
     });
 
     const openai = new OpenAIApi(configuration);
