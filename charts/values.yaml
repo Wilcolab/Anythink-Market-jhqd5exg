@@ -4,11 +4,20 @@ stagingBackendHost: "staging.anythink.market"
 
 backend:
   serviceName: anythink-backend
-  containerPort: 3000
+  - name: http
+    containerPort: 3000
+  - name: debug
+    containerPort: 9229
   replicaCount: 1
   service:
     type: ClusterIP
-    port: 80
+    ports:
+    - name: debug
+      port: 9229
+      targetPort: debug
+    - name: http
+      port: 80
+      targetPort: http
   image:
     repository: 498915426792.dkr.ecr.us-east-2.amazonaws.com/anythink-backend
     stagingRepository: 498915426792.dkr.ecr.us-east-2.amazonaws.com/staging-anythink-backend

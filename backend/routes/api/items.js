@@ -5,6 +5,7 @@ var Comment = mongoose.model("Comment");
 var User = mongoose.model("User");
 var auth = require("../auth");
 const { sendEvent } = require("../../lib/event");
+const { response } = require("express");
 
 // Preload item objects on routes with ':item'
 router.param("item", function(req, res, next, slug) {
@@ -137,6 +138,18 @@ router.get("/feed", auth.required, function(req, res, next) {
   });
 });
 
+
+function saveItem(res, item_request, user) {
+    let item = new Item(item_request);
+
+    item.seller = user;
+
+    return item.save().then(function() {
+      sendEvent('item_created', { item: item_request })
+      return res.json({ item: item.toJSONFor(user) });
+    });
+}
+
 router.post("/", auth.required, function(req, res, next) {
   User.findById(req.payload.id)
     .then(function(user) {
@@ -144,14 +157,7 @@ router.post("/", auth.required, function(req, res, next) {
         return res.sendStatus(401);
       }
 
-      var item = new Item(req.body.item);
-
-      item.seller = user;
-
-      return item.save().then(function() {
-        sendEvent('item_created', { item: req.body.item })
-        return res.json({ item: item.toJSONFor(user) });
-      });
+      return saveItem(res, req.body.item, user);
     })
     .catch(next);
 });
@@ -182,9 +188,10 @@ router.put("/:item", auth.required, function(req, res, next) {
         req.item.description = req.body.item.description;
       }
 
+
       if (typeof req.body.item.image !== "undefined") {
         req.item.image = req.body.item.image;
-      }
+      } 
 
       if (typeof req.body.item.tagList !== "undefined") {
         req.item.tagList = req.body.item.tagList;

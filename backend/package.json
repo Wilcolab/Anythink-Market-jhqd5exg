@@ -7,7 +7,7 @@
   },
   "scripts": {
     "start": "node ./app.js",
-    "dev": "nodemon ./app.js",
+    "dev": "nodemon --inspect ./app.js",
     "seeds": "node ./scripts/seeds.js",
     "test": "newman run ./tests/api-tests.postman.json -e ./tests/env-api-tests.postman.json",
     "stop": "lsof -ti :3000 | xargs kill"
@@ -29,6 +29,7 @@
     "mongoose": "5.12.5",
     "mongoose-unique-validator": "^3.0.0",
     "morgan": "1.7.0",
+    "openai": "^3.2.1",
     "passport": "0.3.2",
     "passport-local": "1.0.0",
     "request": "2.69.0",
