@@ -19,6 +19,20 @@ var ItemSchema = new mongoose.Schema(
 
 ItemSchema.plugin(uniqueValidator, { message: "is already taken" });
 
+ItemSchema.pre("save", function(next) {
+  if (!this.slug) {
+    this.slugify();
+  }
+  // Adding default image if missing
+  if((!this?.image) || (this.image === "")){
+    const defaultImage = "../placeholder.png";
+    this.image = defaultImage;
+  }
+
+
+  next();
+});
+
 ItemSchema.pre("validate", function(next) {
   if (!this.slug) {
     this.slugify();
