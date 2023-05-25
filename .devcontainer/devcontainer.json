@@ -1,7 +1,7 @@
 {
   "name": "Anythink Development Container",
   "image": "public.ecr.aws/v0a2l7y2/wilco/anythink-devcontainer:latest",
-  "forwardPorts": [3000, 3001, 5433, 9229, 27017],
+  "forwardPorts": [3000, 3001, 5433, 27017],
   "portsAttributes": {
     "3000": {
       "label": "Backend",
@@ -17,12 +17,6 @@
     },
     "5433": {
       "label": "Database",
-      "elevateIfNeeded": true,
-      "requireLocalPort": true,
-      "onAutoForward": "silent"
-    },
-    "9229": {
-      "label": "Debug",
       "elevateIfNeeded": true,
       "requireLocalPort": true,
       "onAutoForward": "silent"

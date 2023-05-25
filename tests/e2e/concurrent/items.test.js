@@ -56,7 +56,7 @@ describe("Items Route", () => {
         randomItemInfo({ image: undefined }),
         user
       );
-      expect(createdItem.image).toBeTruthy();
+      expect(createdItem.image).toBeFalsy();
       expect(createdItem.slug).toBeDefined();
     });
 
