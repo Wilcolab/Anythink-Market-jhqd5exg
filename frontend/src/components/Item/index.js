@@ -10,6 +10,8 @@ import {
 import { getItemAndComments } from "./utils/ItemFetcher";
 import { useParams } from "react-router-dom";
 
+import defaultImage from "../../imgs/placeholder.png";
+
 const mapStateToProps = (state) => ({
   ...state.item,
   currentUser: state.common.currentUser,
@@ -39,6 +41,14 @@ const Item = (props) => {
     const markup = {
       __html: marked(props.item.description, { sanitize: true }),
     };
+
+    let item_image;
+    if(!props.item.image) {
+      item_image =  defaultImage;
+    } else {
+      item_image = props.item.image;
+    }
+
     const canModify =
       props.currentUser &&
       props.currentUser.username === props.item.seller.username;
@@ -48,7 +58,7 @@ const Item = (props) => {
           <div className="row bg-white p-4">
             <div className="col-6">
               <img
-                src={props.item.image}
+                src={item_image}
                 alt={props.item.title}
                 className="item-img"
                 style={{ height: "500px", width: "100%", borderRadius: "6px" }}
